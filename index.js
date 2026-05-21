@@ -1,36 +1,53 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion } = require('mongodb');
+require('dotenv').config()
 const port = process.env.PORT || 3000;
 const app = express();
+//middleware;
+app.use(cors());
+app.use(express.json())
 //?root apis;
-app.get('/',(req,res)=>{
+app.get('/', (req, res) => {
     res.send('Hello this is root apis here now')
 })
 //? listiner here;
-app.listen(port,()=>{
+app.listen(port, () => {
     console.log(`This server is runing in port ${port}`);
 })
-/**zap-shift K5UR5ZMYObN3X1Eq */
-const uri = "mongodb+srv://<db_username>:<db_password>@cluster0.fdzc9ua.mongodb.net/?appName=Cluster0";
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const uri = `mongodb+srv://${process.env.USER_NAME}:${process.env.USER_PASSWORD}@cluster0.fdzc9ua.mongodb.net/?appName=Cluster0`;
 const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    }
 });
 async function run() {
-  try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
-  }
+    try {
+        await client.connect();
+        const myDB = client.db("zap-shif");
+        const myPercelColl = myDB.collection("percelDatas");
+        //?post db addPercel data;
+        app.post('/percelDatas', async (req, res) => {
+            const allPercels = req.body;
+            const result = await myPercelColl.insertOne(allPercels);
+            res.send(result);
+
+        })
+
+
+
+
+
+
+
+
+
+        await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    } finally {
+
+    }
 }
-run().catch(console.dir);
+run().catch(console.dir)

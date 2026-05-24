@@ -30,7 +30,12 @@ async function run() {
         const myPercelColl = myDB.collection("percelDatas");
         //?get db myperceldata;
         app.get('/percelDatas',async(req,res)=>{
-            const cursor = myPercelColl.find();
+            const query = {};
+            const email = req.query.email;
+            if(email){
+                query.senderEmail = email
+            }
+            const cursor = myPercelColl.find(query);
             const result = await cursor.toArray();
             res.send(result)
         })

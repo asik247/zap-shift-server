@@ -40,6 +40,13 @@ async function run() {
             const result = await cursor.toArray();
             res.send(result)
         })
+        //?specifique percle load;
+        app.get('/percelDatas/:id',async(req,res)=>{
+            const id = req.params.id;
+            const query = {_id:new ObjectId(id)};
+            const result = await myPercelColl.findOne(query);
+            res.send(result)
+        })
         //?post db addPercel data;
         app.post('/percelDatas', async (req, res) => {
             const allPercels = req.body;

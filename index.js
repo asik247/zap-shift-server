@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const port = process.env.PORT || 3000;
 const app = express();
@@ -29,26 +29,36 @@ async function run() {
         const myDB = client.db("zap-shif");
         const myPercelColl = myDB.collection("percelDatas");
         //?get db myperceldata;
-        app.get('/percelDatas',async(req,res)=>{
+        app.get('/percelDatas', async (req, res) => {
             const query = {};
             const email = req.query.email;
-            if(email){
+            if (email) {
                 query.senderEmail = email
             }
-            const cursor = myPercelColl.find(query);
+            const options = { sort: { createdAT: -1 } }
+            const cursor = myPercelColl.find(query, options);
             const result = await cursor.toArray();
             res.send(result)
         })
         //?post db addPercel data;
         app.post('/percelDatas', async (req, res) => {
             const allPercels = req.body;
+            allPercels.createdAT = new Date();
             const result = await myPercelColl.insertOne(allPercels);
             res.send(result);
 
         })
+        // ? percels delete method;
+        app.delete('/percelDatas/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: new ObjectId(id) };
+            const result = await myPercelColl.deleteOne(query);
+            res.send(result);
+        })
         //?update user percel just practics perpose;
         // app.patch('/percelDatas',async (req,res)=>{
-            
+
         // })
 
 

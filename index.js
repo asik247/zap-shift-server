@@ -3,6 +3,7 @@ const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const port = process.env.PORT || 3000;
+const stripe = require('stripe')(process.env.STRIP_SECRIT);
 const app = express();
 //middleware;
 app.use(cors());
@@ -41,9 +42,9 @@ async function run() {
             res.send(result)
         })
         //?specifique percle load;
-        app.get('/percelDatas/:id',async(req,res)=>{
+        app.get('/percelDatas/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id:new ObjectId(id)};
+            const query = { _id: new ObjectId(id) };
             const result = await myPercelColl.findOne(query);
             res.send(result)
         })
@@ -62,6 +63,37 @@ async function run() {
             const query = { _id: new ObjectId(id) };
             const result = await myPercelColl.deleteOne(query);
             res.send(result);
+        })
+        //?Payment relative apis;
+        app.post('/create-checkout-session', async (req, res) => {
+            const paymentInfo = req.body;
+            const amount = parseInt(paymentInfo.cost) * 100;
+            const session = await stripe.checkout.sessions.create({
+                line_items: [
+                    {
+                        // Provide the exact Price ID (for example, price_1234) of the product you want to sell
+                        price_data:{
+                            currency:'USD',
+                            unit_amount:amount,
+                            product_data:{
+                                name:paymentInfo.percelName
+                            }
+
+                        },
+                        quantity: 1,
+                    },
+                ],
+                customer_email:paymentInfo.senderEmail,
+                mode: 'payment',
+                metadata:{
+                    percleId:paymentInfo.percleId
+                },
+                success_url: `${process.env.STRIP_DOMAIN}/dashboard/payment-success`,
+                cancel_url: `${process.env.STRIP_DOMAIN}/dashboard/payment-cancelled`,
+            });
+            console.log(session);
+            res.send({url:session.url})
+
         })
         //?update user percel just practics perpose;
         // app.patch('/percelDatas',async (req,res)=>{

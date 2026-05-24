@@ -28,6 +28,12 @@ async function run() {
         await client.connect();
         const myDB = client.db("zap-shif");
         const myPercelColl = myDB.collection("percelDatas");
+        //?get db myperceldata;
+        app.get('/percelDatas',async(req,res)=>{
+            const cursor = myPercelColl.find();
+            const result = await cursor.toArray();
+            res.send(result)
+        })
         //?post db addPercel data;
         app.post('/percelDatas', async (req, res) => {
             const allPercels = req.body;
@@ -35,6 +41,10 @@ async function run() {
             res.send(result);
 
         })
+        //?update user percel just practics perpose;
+        // app.patch('/percelDatas',async (req,res)=>{
+            
+        // })
 
 
 

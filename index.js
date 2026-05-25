@@ -3,6 +3,11 @@ const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const port = process.env.PORT || 3000;
+//!Genereate Tracking id;
+const generateTrackingId = () => {
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    return `ZAP-${Date.now()}-${randomNum}`;
+}
 const stripe = require('stripe')(process.env.STRIP_SECRIT);
 const app = express();
 //middleware;
@@ -29,6 +34,7 @@ async function run() {
         await client.connect();
         const myDB = client.db("zap-shif");
         const myPercelColl = myDB.collection("percelDatas");
+        const paymentColl = myDB.collection("payments")
         //?get db myperceldata;
         app.get('/percelDatas', async (req, res) => {
             const query = {};
@@ -64,7 +70,7 @@ async function run() {
             const result = await myPercelColl.deleteOne(query);
             res.send(result);
         })
-        //?Payment relative apis;
+        //?Payment relative apis checkout-session;
         app.post('/create-checkout-session', async (req, res) => {
             const paymentInfo = req.body
             const amount = parseInt(paymentInfo.cost) * 100;
@@ -84,7 +90,8 @@ async function run() {
 
                 mode: 'payment',
                 metadata: {
-                    percelId: paymentInfo.percelId
+                    percelId: paymentInfo.percelId,
+                    percelName: paymentInfo.percelName
                 },
                 customer_email: paymentInfo.senderEmail,
                 success_url: `${process.env.STRIP_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
@@ -92,41 +99,43 @@ async function run() {
             })
             res.send({ url: session.url })
         })
-        //?confarm pai apis;
-        // app.patch('/payment-success', async (req, res) => {
-        //     const sessionId = req.query.session_id;
-        //     const session = await stripe.checkout.sessions.retrieve(sessionId)
-        //     console.log('session retrive', session);
-        //     if (session.payment_status === 'paid') {
-        //         const id = session.metadata.percelId;
-        //         const query = {_id:new ObjectId(id)};
-        //         const update = {
-        //             $set:{
-        //                 paymentStatus:'paid'
-        //             }
-        //         }
-        //         const result = await myPercelColl.updateOne(query,update)
-        //         res.send(result)
-        //     }
-        //     res.send({ sucssess: false })
-        // })
         //?Payment success api;
-        app.patch('/payment-success',async(req,res)=>{
+        app.patch('/payment-success', async (req, res) => {
             const sessionId = req.query.session_id;
             const session = await stripe.checkout.sessions.retrieve(sessionId);
-            console.log('session retirve',session);
-            if(session.payment_status === 'paid'){
+            console.log('session retirve', session);
+            if (session.payment_status === 'paid') {
+                const trackingId = generateTrackingId();
                 const id = session.metadata.percelId;
-                const query = {_id:new ObjectId(id)};
+                const query = { _id: new ObjectId(id) };
                 const update = {
-                    $set:{
-                        paymentStatus:'paid'
+                    $set: {
+                        paymentStatus: 'paid'
                     }
                 }
-                const result = await myPercelColl.updateOne(query,update);
-                res.send(result)
+                const result = await myPercelColl.updateOne(query, update);
+                //Todo payment info post db;
+                const payment = {
+                    amount: session.amount_total / 100,
+                    currency: session.currency,
+                    customerEmail: session.customer_email,
+                    percelId: session.metadata.percelId,
+                    percelName: session.metadata.percleName,
+                    transactionId: session.payment_intent,
+                    paymentStatus: session.payment_status,
+                    paidAt: new Date(),
+                    trackingId: trackingId
+                }
+                if (session.payment_status === 'paid') {
+                    const resultPayment = await paymentColl.insertOne(payment)
+                    res.send({ success: true, modifyPercel: result, 
+                        trackingId:trackingId,
+                        transactionId:session.payment_intent,
+                        paymentInfo: resultPayment })
+                }
+
             }
-            res.send({success:true})
+            res.send({ success: false })
         })
         //?update user percel just practics perpose;
         // app.patch('/percelDatas',async (req,res)=>{

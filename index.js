@@ -71,25 +71,62 @@ async function run() {
             const session = await stripe.checkout.sessions.create({
                 line_items: [
                     {
-                        price_data:{
-                            currency:'USD',
-                            unit_amount:amount,
-                            product_data:{
-                            name:paymentInfo.percelName
+                        price_data: {
+                            currency: 'USD',
+                            unit_amount: amount,
+                            product_data: {
+                                name: paymentInfo.percelName
                             }
                         },
                         quantity: 1,
                     },
                 ],
-                customer_email:paymentInfo.senderEmail,
+
                 mode: 'payment',
-                metadata:{
-                    percelId:paymentInfo.percelId
+                metadata: {
+                    percelId: paymentInfo.percelId
                 },
-                success_url: `${process.env.STRIP_DOMAIN}/dashboard/payment-success`,
-                cancel_url: `${process.env.STRIP_DOMAIN}/dashboard/payment-cancelled`,
+                customer_email: paymentInfo.senderEmail,
+                success_url: `${process.env.STRIP_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `${process.env.STRIP_DOMAIN}/dashboard/payment-cancelled?session_id={CHECKOUT_SESSION_ID}`,
             })
-            res.send({url:session.url})
+            res.send({ url: session.url })
+        })
+        //?confarm pai apis;
+        // app.patch('/payment-success', async (req, res) => {
+        //     const sessionId = req.query.session_id;
+        //     const session = await stripe.checkout.sessions.retrieve(sessionId)
+        //     console.log('session retrive', session);
+        //     if (session.payment_status === 'paid') {
+        //         const id = session.metadata.percelId;
+        //         const query = {_id:new ObjectId(id)};
+        //         const update = {
+        //             $set:{
+        //                 paymentStatus:'paid'
+        //             }
+        //         }
+        //         const result = await myPercelColl.updateOne(query,update)
+        //         res.send(result)
+        //     }
+        //     res.send({ sucssess: false })
+        // })
+        //?Payment success api;
+        app.patch('/payment-success',async(req,res)=>{
+            const sessionId = req.query.session_id;
+            const session = await stripe.checkout.sessions.retrieve(sessionId);
+            console.log('session retirve',session);
+            if(session.payment_status === 'paid'){
+                const id = session.metadata.percelId;
+                const query = {_id:new ObjectId(id)};
+                const update = {
+                    $set:{
+                        paymentStatus:'paid'
+                    }
+                }
+                const result = await myPercelColl.updateOne(query,update);
+                res.send(result)
+            }
+            res.send({success:true})
         })
         //?update user percel just practics perpose;
         // app.patch('/percelDatas',async (req,res)=>{

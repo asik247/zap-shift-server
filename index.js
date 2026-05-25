@@ -66,19 +66,17 @@ async function run() {
         })
         //?Payment relative apis;
         app.post('/create-checkout-session', async (req, res) => {
-            const paymentInfo = req.body;
+            const paymentInfo = req.body
             const amount = parseInt(paymentInfo.cost) * 100;
             const session = await stripe.checkout.sessions.create({
                 line_items: [
                     {
-                        // Provide the exact Price ID (for example, price_1234) of the product you want to sell
                         price_data:{
                             currency:'USD',
                             unit_amount:amount,
                             product_data:{
-                                name:paymentInfo.percelName
+                            name:paymentInfo.percelName
                             }
-
                         },
                         quantity: 1,
                     },
@@ -86,14 +84,12 @@ async function run() {
                 customer_email:paymentInfo.senderEmail,
                 mode: 'payment',
                 metadata:{
-                    percleId:paymentInfo.percleId
+                    percelId:paymentInfo.percelId
                 },
                 success_url: `${process.env.STRIP_DOMAIN}/dashboard/payment-success`,
                 cancel_url: `${process.env.STRIP_DOMAIN}/dashboard/payment-cancelled`,
-            });
-            console.log(session);
+            })
             res.send({url:session.url})
-
         })
         //?update user percel just practics perpose;
         // app.patch('/percelDatas',async (req,res)=>{

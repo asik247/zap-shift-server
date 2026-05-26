@@ -99,7 +99,7 @@ async function run() {
             })
             res.send({ url: session.url })
         })
-        //?Payment success api;
+        //?Payment success api retrive;
         app.patch('/payment-success', async (req, res) => {
             const sessionId = req.query.session_id;
             const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -137,10 +137,9 @@ async function run() {
             }
             res.send({ success: false })
         })
-        //?update user percel just practics perpose;
-        // app.patch('/percelDatas',async (req,res)=>{
 
-        // })
+        //! now create checkout-session for parcles 2;
+       
 
 
 

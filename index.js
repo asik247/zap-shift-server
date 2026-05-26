@@ -138,17 +138,6 @@ async function run() {
             res.send({ success: false })
         })
 
-        //! now create checkout-session for parcles 2;
-        //! then success id post this server and retrive and some info post db and send cliend site and show tracking id and tranzation id;
-        //Todo next setp pland this no-repated db data post this info;
-
-        //?and then lastly i can read next.js and TypeScript;
-       
-
-
-
-
-
 
 
 

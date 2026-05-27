@@ -101,24 +101,31 @@ async function run() {
         // })
         //!checkout-session-2;
         app.post("/create-checkout-session", async (req, res) => {
+            const paymentInfo = req.body;
+            const amount = parseInt(paymentInfo.cost) * 100;
             const session = await stripe.checkout.sessions.create({
                 line_items: [
                     {
                        price_data:{
                         currency:'USD',
-                        unit_amount:'',
+                        unit_amount:amount,
                         product_data:{
-                            name:''
+                            name:paymentInfo.percelName
                         }
                        },
                         quantity: 1,
                     },
                 ],
                 mode: 'payment',
-                
-                return_url: `${YOUR_DOMAIN}/complete?session_id={CHECKOUT_SESSION_ID}`,
+                metadata:{
+                    percelId: paymentInfo.percelId,
+                    percelName: paymentInfo.percelName
+                },
+                 customer_email: paymentInfo.senderEmail,
+                success_url: `${process.env.STRIP_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `${process.env.STRIP_DOMAIN}/dashboard/payment-cancelled?session_id={CHECKOUT_SESSION_ID}`,
             });
-            res.send({ clientSecret: session.client_secret });
+            res.send({ url:session.url });
         });
         //?Payment success api retrive;
         app.patch('/payment-success', async (req, res) => {

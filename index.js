@@ -71,34 +71,55 @@ async function run() {
             res.send(result);
         })
         //?Payment relative apis checkout-session;
-        app.post('/create-checkout-session', async (req, res) => {
-            const paymentInfo = req.body
-            const amount = parseInt(paymentInfo.cost) * 100;
+        // app.post('/create-checkout-session', async (req, res) => {
+        //     const paymentInfo = req.body
+        //     const amount = parseInt(paymentInfo.cost) * 100;
+        //     const session = await stripe.checkout.sessions.create({
+        //         line_items: [
+        //             {
+        //                 price_data: {
+        //                     currency: 'USD',
+        //                     unit_amount: amount,
+        //                     product_data: {
+        //                         name: paymentInfo.percelName
+        //                     }
+        //                 },
+        //                 quantity: 1,
+        //             },
+        //         ],
+
+        //         mode: 'payment',
+        //         metadata: {
+        //             percelId: paymentInfo.percelId,
+        //             percelName: paymentInfo.percelName
+        //         },
+        //         customer_email: paymentInfo.senderEmail,
+        //         success_url: `${process.env.STRIP_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        //         cancel_url: `${process.env.STRIP_DOMAIN}/dashboard/payment-cancelled?session_id={CHECKOUT_SESSION_ID}`,
+        //     })
+        //     res.send({ url: session.url })
+        // })
+        //!checkout-session-2;
+        app.post("/create-checkout-session", async (req, res) => {
             const session = await stripe.checkout.sessions.create({
                 line_items: [
                     {
-                        price_data: {
-                            currency: 'USD',
-                            unit_amount: amount,
-                            product_data: {
-                                name: paymentInfo.percelName
-                            }
-                        },
+                       price_data:{
+                        currency:'USD',
+                        unit_amount:'',
+                        product_data:{
+                            name:''
+                        }
+                       },
                         quantity: 1,
                     },
                 ],
-
                 mode: 'payment',
-                metadata: {
-                    percelId: paymentInfo.percelId,
-                    percelName: paymentInfo.percelName
-                },
-                customer_email: paymentInfo.senderEmail,
-                success_url: `${process.env.STRIP_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-                cancel_url: `${process.env.STRIP_DOMAIN}/dashboard/payment-cancelled?session_id={CHECKOUT_SESSION_ID}`,
-            })
-            res.send({ url: session.url })
-        })
+                
+                return_url: `${YOUR_DOMAIN}/complete?session_id={CHECKOUT_SESSION_ID}`,
+            });
+            res.send({ clientSecret: session.client_secret });
+        });
         //?Payment success api retrive;
         app.patch('/payment-success', async (req, res) => {
             const sessionId = req.query.session_id;
@@ -128,10 +149,12 @@ async function run() {
                 }
                 if (session.payment_status === 'paid') {
                     const resultPayment = await paymentColl.insertOne(payment)
-                    res.send({ success: true, modifyPercel: result, 
-                        trackingId:trackingId,
-                        transactionId:session.payment_intent,
-                        paymentInfo: resultPayment })
+                    res.send({
+                        success: true, modifyPercel: result,
+                        trackingId: trackingId,
+                        transactionId: session.payment_intent,
+                        paymentInfo: resultPayment
+                    })
                 }
 
             }

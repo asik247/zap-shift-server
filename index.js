@@ -100,44 +100,49 @@ async function run() {
             res.send({ url: session.url })
         })
         //?Payment success api retrive;
-        app.patch('/payment-success', async (req, res) => {
-            const sessionId = req.query.session_id;
-            const session = await stripe.checkout.sessions.retrieve(sessionId);
-            console.log('session retirve', session);
-            if (session.payment_status === 'paid') {
-                const trackingId = generateTrackingId();
-                const id = session.metadata.percelId;
-                const query = { _id: new ObjectId(id) };
-                const update = {
-                    $set: {
-                        paymentStatus: 'paid'
-                    }
-                }
-                const result = await myPercelColl.updateOne(query, update);
-                //Todo payment info post db;
-                const payment = {
-                    amount: session.amount_total / 100,
-                    currency: session.currency,
-                    customerEmail: session.customer_email,
-                    percelId: session.metadata.percelId,
-                    percelName: session.metadata.percleName,
-                    transactionId: session.payment_intent,
-                    paymentStatus: session.payment_status,
-                    paidAt: new Date(),
-                    trackingId: trackingId
-                }
-                if (session.payment_status === 'paid') {
-                    const resultPayment = await paymentColl.insertOne(payment)
-                    res.send({
-                        success: true, modifyPercel: result,
-                        trackingId: trackingId,
-                        transactionId: session.payment_intent,
-                        paymentInfo: resultPayment
-                    })
-                }
+        // app.patch('/payment-success', async (req, res) => {
+        //     const sessionId = req.query.session_id;
+        //     const session = await stripe.checkout.sessions.retrieve(sessionId);
+        //     console.log('session retirve', session);
+        //     if (session.payment_status === 'paid') {
+        //         const trackingId = generateTrackingId();
+        //         const id = session.metadata.percelId;
+        //         const query = { _id: new ObjectId(id) };
+        //         const update = {
+        //             $set: {
+        //                 paymentStatus: 'paid'
+        //             }
+        //         }
+        //         const result = await myPercelColl.updateOne(query, update);
+        //         //Todo payment info post db;
+        //         const payment = {
+        //             amount: session.amount_total / 100,
+        //             currency: session.currency,
+        //             customerEmail: session.customer_email,
+        //             percelId: session.metadata.percelId,
+        //             percelName: session.metadata.percleName,
+        //             transactionId: session.payment_intent,
+        //             paymentStatus: session.payment_status,
+        //             paidAt: new Date(),
+        //             trackingId: trackingId
+        //         }
+        //         if (session.payment_status === 'paid') {
+        //             const resultPayment = await paymentColl.insertOne(payment)
+        //             res.send({
+        //                 success: true, modifyPercel: result,
+        //                 trackingId: trackingId,
+        //                 transactionId: session.payment_intent,
+        //                 paymentInfo: resultPayment
+        //             })
+        //         }
 
-            }
-            res.send({ success: false })
+        //     }
+        //     res.send({ success: false })
+        // })
+        //?get sessionId and retrive;
+        app.patch('/payment-success',async (req,res)=>{
+            const sessionId = req.query.session_id;
+            res.send({success:true})
         })
 
 

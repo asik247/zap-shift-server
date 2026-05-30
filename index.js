@@ -104,13 +104,21 @@ async function run() {
             const sessionId = req.query.session_id;
             const session = await stripe.checkout.sessions.retrieve(sessionId);
             // console.log('session retirve', session);
+            //?Existing transactiondId;
+            const transactionId = session.payment_intent;
+            const query = { transactionId: transactionId }
+            const paymentExist = await paymentColl.findOne(query);
+            if (paymentExist) {
+                return res.send({ message: 'already exists', transactionId, trackingId: paymentExist.trackingId })
+            }
+            const trackingId = generateTrackingId();
             if (session.payment_status === 'paid') {
-                const trackingId = generateTrackingId();
                 const id = session.metadata.percelId;
                 const query = { _id: new ObjectId(id) };
                 const update = {
                     $set: {
-                        paymentStatus: 'paid'
+                        paymentStatus: 'paid',
+                        trackingId: trackingId
                     }
                 }
                 const result = await myPercelColl.updateOne(query, update);
@@ -120,12 +128,14 @@ async function run() {
                     currency: session.currency,
                     customerEmail: session.customer_email,
                     percelId: session.metadata.percelId,
-                    percelName: session.metadata.percleName,
+                    percelName: session.metadata.percelName,
                     transactionId: session.payment_intent,
                     paymentStatus: session.payment_status,
                     paidAt: new Date(),
                     trackingId: trackingId
                 }
+                console.log(payment);
+                //? ay khen a validation kro transactionid diya jeno reload korley oo db te 2 ber add na hoy?
                 if (session.payment_status === 'paid') {
                     const resultPayment = await paymentColl.insertOne(payment)
                     res.send({
@@ -139,7 +149,6 @@ async function run() {
             }
             res.send({ success: false })
         })
-       
 
 
 

@@ -104,14 +104,15 @@ async function run() {
             const sessionId = req.query.session_id;
             const session = await stripe.checkout.sessions.retrieve(sessionId);
             // console.log('session retirve', session);
+            const trackingId = generateTrackingId();
             //?Existing transactiondId;
             const transactionId = session.payment_intent;
             const query = { transactionId: transactionId }
             const paymentExist = await paymentColl.findOne(query);
+            console.log(paymentExist);
             if (paymentExist) {
                 return res.send({ message: 'already exists', transactionId, trackingId: paymentExist.trackingId })
             }
-            const trackingId = generateTrackingId();
             if (session.payment_status === 'paid') {
                 const id = session.metadata.percelId;
                 const query = { _id: new ObjectId(id) };
@@ -148,6 +149,17 @@ async function run() {
 
             }
             res.send({ success: false })
+        })
+        //? get all payment or query set get db;
+        app.get('/payment',async(req,res)=>{
+            const email = req.query.email;
+            const query = {};
+            if(email){
+                query.customerEmail = email
+            }
+            const cursor = paymentColl.find(query);
+            const result = await cursor.toArray();
+            res.send(result)
         })
 
 

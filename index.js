@@ -10,9 +10,21 @@ const generateTrackingId = () => {
 }
 const stripe = require('stripe')(process.env.STRIP_SECRIT);
 const app = express();
-//middleware;
+//?middleware;
 app.use(cors());
 app.use(express.json())
+//! FireBase Verify;
+const fireBsVerify = (req, res, next) => {
+    const authorization = req.headers.authorization;
+    if (!authorization) {
+        return res.status(401).send({ message: 'unauthorization access' })
+    }
+    const token = authorization.split(' ')[1];
+    if (!token) {
+        return res.status(401).send({ message: 'unauthorization access' })
+    }
+    next()
+}
 //?root apis;
 app.get('/', (req, res) => {
     res.send('Hello this is root apis here now')
@@ -151,10 +163,10 @@ async function run() {
             res.send({ success: false })
         })
         //? get all payment or query set get db;
-        app.get('/payment',async(req,res)=>{
+        app.get('/payment', fireBsVerify, async (req, res) => {
             const email = req.query.email;
             const query = {};
-            if(email){
+            if (email) {
                 query.customerEmail = email
             }
             const cursor = paymentColl.find(query);

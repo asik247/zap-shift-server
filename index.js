@@ -3,6 +3,12 @@ const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const port = process.env.PORT || 3000;
+//?FireBS Admin and services Accoutn;
+const admin = require("firebase-admin");
+const serviceAccount = require("./zap-shift-bde07-firebase-adminsdk.json");
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
 //!Genereate Tracking id;
 const generateTrackingId = () => {
     const randomNum = Math.floor(1000 + Math.random() * 9000);
@@ -14,16 +20,25 @@ const app = express();
 app.use(cors());
 app.use(express.json())
 //! FireBase Verify;
-const fireBsVerify = (req, res, next) => {
+const fireBsVerify =async (req, res, next) => {
     const authorization = req.headers.authorization;
     if (!authorization) {
         return res.status(401).send({ message: 'unauthorization access' })
     }
     const token = authorization.split(' ')[1];
-    if (!token) {
-        return res.status(401).send({ message: 'unauthorization access' })
+    // if (!token) {
+    //     return res.status(401).send({ message: 'unauthorization access' })
+    // }
+    try{
+        const decoded = await admin.auth().verifyIdToken(token);
+        req.decoded_email = decoded.email
+        // console.log(decoded_email);
+        next()
     }
-    next()
+    catch{
+        return res.status(401).send({message:'unauthorization access'})
+    }
+    
 }
 //?root apis;
 app.get('/', (req, res) => {
@@ -165,6 +180,11 @@ async function run() {
         //? get all payment or query set get db;
         app.get('/payment', fireBsVerify, async (req, res) => {
             const email = req.query.email;
+            const decodedEmail = req.decoded_email
+            console.log('same',decodedEmail,email);
+            if(decodedEmail !== email){
+                return res.status(403).send({message:'forbidien access'})
+            }
             const query = {};
             if (email) {
                 query.customerEmail = email

@@ -26,13 +26,9 @@ const fireBsVerify =async (req, res, next) => {
         return res.status(401).send({ message: 'unauthorization access' })
     }
     const token = authorization.split(' ')[1];
-    // if (!token) {
-    //     return res.status(401).send({ message: 'unauthorization access' })
-    // }
     try{
         const decoded = await admin.auth().verifyIdToken(token);
         req.decoded_email = decoded.email
-        // console.log(decoded_email);
         next()
     }
     catch{
@@ -181,7 +177,6 @@ async function run() {
         app.get('/payment', fireBsVerify, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded_email
-            console.log('same',decodedEmail,email);
             if(decodedEmail !== email){
                 return res.status(403).send({message:'forbidien access'})
             }

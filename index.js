@@ -222,9 +222,15 @@ async function run() {
             const rider = req.body;
             console.log(rider);
             rider.status = 'pending',
-                rider.createdAT = new Date()
+            rider.createdAT = new Date()
             const result = await ridersColl.insertOne(rider);
             res.send(result)
+        })
+        //? riders update apis here;
+        app.patch('/riders/:id',async(req,res)=>{
+            const id = req.params.id;
+            console.log(id);
+            
         })
 
 

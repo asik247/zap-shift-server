@@ -20,21 +20,21 @@ const app = express();
 app.use(cors());
 app.use(express.json())
 //! FireBase Verify;
-const fireBsVerify =async (req, res, next) => {
+const fireBsVerify = async (req, res, next) => {
     const authorization = req.headers.authorization;
     if (!authorization) {
         return res.status(401).send({ message: 'unauthorization access' })
     }
     const token = authorization.split(' ')[1];
-    try{
+    try {
         const decoded = await admin.auth().verifyIdToken(token);
         req.decoded_email = decoded.email
         next()
     }
-    catch{
-        return res.status(401).send({message:'unauthorization access'})
+    catch {
+        return res.status(401).send({ message: 'unauthorization access' })
     }
-    
+
 }
 //?root apis;
 app.get('/', (req, res) => {
@@ -59,18 +59,19 @@ async function run() {
         const userColl = myDB.collection('users');
         const myPercelColl = myDB.collection("percelDatas");
         const paymentColl = myDB.collection("payments")
+        const ridersColl = myDB.collection("riders")
         //?Users relative apis here;
-        app.post('/users',async(req,res)=>{
+        app.post('/users', async (req, res) => {
             const user = req.body;
             user.role = 'user';
             user.createdAT = new Date();
             //? already user in then no added;
             const email = user.email;
-            const userExists = await userColl.findOne({email});
-            if(userExists){
-                return res.send({message:'user already exist'})
+            const userExists = await userColl.findOne({ email });
+            if (userExists) {
+                return res.send({ message: 'user already exist' })
             }
-            
+
             const result = await userColl.insertOne(user);
             res.send(result);
         })
@@ -193,8 +194,8 @@ async function run() {
         app.get('/payment', fireBsVerify, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded_email
-            if(decodedEmail !== email){
-                return res.status(403).send({message:'forbidien access'})
+            if (decodedEmail !== email) {
+                return res.status(403).send({ message: 'forbidien access' })
             }
             const query = {};
             if (email) {
@@ -202,6 +203,27 @@ async function run() {
             }
             const cursor = paymentColl.find(query);
             const result = await cursor.toArray();
+            res.send(result)
+        })
+        //? query using riders data load;
+        app.get('/riders', async (req, res) => {
+            const status = req.query.status;
+            console.log(status);
+            const query = {};
+            if (status) {
+                query.status = status
+            }
+            const cursor = ridersColl.find(query);
+            const result = await cursor.toArray();
+            res.send(result)
+        })
+        //? riders api here;
+        app.post('/riders', async (req, res) => {
+            const rider = req.body;
+            console.log(rider);
+            rider.status = 'pending',
+                rider.createdAT = new Date()
+            const result = await ridersColl.insertOne(rider);
             res.send(result)
         })
 

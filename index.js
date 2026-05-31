@@ -56,8 +56,18 @@ async function run() {
     try {
         await client.connect();
         const myDB = client.db("zap-shif");
+        const userColl = myDB.collection('users');
         const myPercelColl = myDB.collection("percelDatas");
         const paymentColl = myDB.collection("payments")
+        //?Users relative apis here;
+        app.post('/users',async(req,res)=>{
+            const user = req.body;
+            user.role = 'user';
+            user.createdAT = new Date();
+
+            const result = await userColl.insertOne(user);
+            res.send(result);
+        })
         //?get db myperceldata;
         app.get('/percelDatas', async (req, res) => {
             const query = {};

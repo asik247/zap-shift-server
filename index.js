@@ -64,7 +64,13 @@ async function run() {
             const user = req.body;
             user.role = 'user';
             user.createdAT = new Date();
-
+            //? already user in then no added;
+            const email = user.email;
+            const userExists = await userColl.findOne({email});
+            if(userExists){
+                return res.send({message:'user already exist'})
+            }
+            
             const result = await userColl.insertOne(user);
             res.send(result);
         })

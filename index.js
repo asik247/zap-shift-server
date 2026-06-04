@@ -243,6 +243,7 @@ async function run() {
            
 
         })
+        console.log('hi');
 
 
 

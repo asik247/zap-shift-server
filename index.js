@@ -208,7 +208,7 @@ async function run() {
         //? query using riders data load;
         app.get('/riders', async (req, res) => {
             const status = req.query.status;
-            console.log(status);
+            // console.log(status);
             const query = {};
             if (status) {
                 query.status = status
@@ -220,17 +220,28 @@ async function run() {
         //? riders api here;
         app.post('/riders', async (req, res) => {
             const rider = req.body;
-            console.log(rider);
+            // console.log(rider);
             rider.status = 'pending',
-            rider.createdAT = new Date()
+                rider.createdAT = new Date()
             const result = await ridersColl.insertOne(rider);
             res.send(result)
         })
         //? riders update apis here;
-        app.patch('/riders/:id',async(req,res)=>{
+        app.patch('/riders/:id', async (req, res) => {
+            const data = req.body;
+            console.log(data);
+            const status = req.body.status;
             const id = req.params.id;
-            console.log(id);
-            
+            const query = { _id: new ObjectId(id) };
+            const upatedDoc = {
+                $set: {
+                    status: status
+                }
+            }
+            const result = await ridersColl.updateOne(query, upatedDoc);
+            res.send(result)
+           
+
         })
 
 

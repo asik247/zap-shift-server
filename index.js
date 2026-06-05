@@ -226,6 +226,12 @@ async function run() {
             const result = await ridersColl.insertOne(rider);
             res.send(result)
         })
+        app.delete('/riders/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await ridersColl.deleteOne(query);
+            res.send(result);
+        })
         //? riders update apis here;
         app.patch('/riders/:id', async (req, res) => {
             const status = req.body.status;
@@ -237,21 +243,21 @@ async function run() {
                 }
             }
             const result = await ridersColl.updateOne(query, upatedDoc);
-            if(status === 'Approved'){
+            if (status === 'Approved') {
                 const email = req.body.email;
-                const emailQuery = {email};
+                const emailQuery = { email };
                 const updateUserRole = {
-                    $set:{
-                        role:'rider'
+                    $set: {
+                        role: 'rider'
                     }
                 }
-                const userResult = await userColl.updateOne(emailQuery,updateUserRole)
+                const userResult = await userColl.updateOne(emailQuery, updateUserRole)
             }
             res.send(result)
-           
+
 
         })
-        
+
 
 
 

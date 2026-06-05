@@ -228,8 +228,6 @@ async function run() {
         })
         //? riders update apis here;
         app.patch('/riders/:id', async (req, res) => {
-            const data = req.body;
-            console.log(data);
             const status = req.body.status;
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
@@ -239,6 +237,16 @@ async function run() {
                 }
             }
             const result = await ridersColl.updateOne(query, upatedDoc);
+            if(status === 'Approved'){
+                const email = req.body.email;
+                const emailQuery = {email};
+                const updateUserRole = {
+                    $set:{
+                        role:'rider'
+                    }
+                }
+                const userResult = await userColl.updateOne(emailQuery,updateUserRole)
+            }
             res.send(result)
            
 

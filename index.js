@@ -60,6 +60,12 @@ async function run() {
         const myPercelColl = myDB.collection("percelDatas");
         const paymentColl = myDB.collection("payments")
         const ridersColl = myDB.collection("riders")
+        //? Users relaive apis get metod;
+        app.get('/users',async(req,res)=>{
+            const cursor = userColl.find();
+            const result = await cursor.toArray();
+            res.send(result)
+        })
         //?Users relative apis here;
         app.post('/users', async (req, res) => {
             const user = req.body;

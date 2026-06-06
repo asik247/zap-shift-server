@@ -81,6 +81,20 @@ async function run() {
             const result = await userColl.insertOne(user);
             res.send(result);
         })
+        //? Users relative apis patch method;
+        app.patch('/users/:id',async(req,res)=>{
+            const id = req.params.id;
+            const roleInfo = req.body;
+            // console.log(id,roleInfo.role);
+            const query = { _id : new ObjectId(id)};
+            const updateRole = {
+                $set:{
+                    role:roleInfo.role
+                }
+            }
+            const result = await userColl.updateOne(query,updateRole)
+            res.send(result)
+        })
         //?get db myperceldata;
         app.get('/percelDatas', async (req, res) => {
             const query = {};

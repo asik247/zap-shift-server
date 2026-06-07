@@ -62,7 +62,12 @@ async function run() {
         const ridersColl = myDB.collection("riders")
         //? vefify Admin token;
         const verifyAdmin = async (req,res,next) =>{
-            // if login user role admin then next ;;;
+            const email = req.decoded_email;
+            const query = { email };
+            const user = await userColl.findOne(query);
+            if(!user || user.role !== 'admin'){
+                return res.status(403).send({message:'forbiden access'})
+            }
             next()
         }
         //? Users relaive apis get metod;
@@ -97,7 +102,7 @@ async function run() {
             res.send(result);
         })
         //? Users relative apis patch method;
-        app.patch('/users/:id/role',verifyIdToken,verifyAdmin,async(req,res)=>{
+        app.patch('/users/:id/role',fireBsVerify,verifyAdmin,async(req,res)=>{
             const id = req.params.id;
             const roleInfo = req.body;
             // console.log(id,roleInfo.role);

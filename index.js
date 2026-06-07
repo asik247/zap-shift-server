@@ -60,11 +60,26 @@ async function run() {
         const myPercelColl = myDB.collection("percelDatas");
         const paymentColl = myDB.collection("payments")
         const ridersColl = myDB.collection("riders")
+        //? vefify Admin token;
+        const verifyAdmin = async (req,res,next) =>{
+            // if login user role admin then next ;;;
+            next()
+        }
         //? Users relaive apis get metod;
         app.get('/users',async(req,res)=>{
             const cursor = userColl.find();
             const result = await cursor.toArray();
             res.send(result)
+        })
+        //? Users get apis using id and email;
+        app.get('/users/:id',async(req,res)=>{
+
+        })
+        app.get('/users/:email/role',async(req,res)=>{
+            const email = req.params.email;
+            const query = { email };
+            const user = await userColl.findOne(query);
+            res.send({role:user?.role || 'user'});
         })
         //?Users relative apis here;
         app.post('/users', async (req, res) => {
@@ -82,7 +97,7 @@ async function run() {
             res.send(result);
         })
         //? Users relative apis patch method;
-        app.patch('/users/:id',async(req,res)=>{
+        app.patch('/users/:id/role',verifyIdToken,verifyAdmin,async(req,res)=>{
             const id = req.params.id;
             const roleInfo = req.body;
             // console.log(id,roleInfo.role);

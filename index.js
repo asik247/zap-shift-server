@@ -149,12 +149,15 @@ async function run() {
             const result = await userColl.updateOne(query,updateRole)
             res.send(result)
         })
-        //?get db myperceldata ✅✅;
+        //?get db myperceldata;
         app.get('/percelDatas', async (req, res) => {
             const query = {};
-            const email = req.query.email;
+            const {email,deliveryStatus} = req.query;
             if (email) {
                 query.senderEmail = email
+            }
+            if(deliveryStatus){
+                query.deliveryStatus = deliveryStatus
             }
             const options = { sort: { createdAT: -1 } }
             const cursor = myPercelColl.find(query, options);
@@ -282,14 +285,21 @@ async function run() {
         })
         //? query using riders data load;
         app.get('/riders', async (req, res) => {
-            const status = req.query.status;
-            // console.log(status);
+            const {status,district,workStatus,} = req.query
             const query = {};
             if (status) {
                 query.status = status
             }
+            // console.log('staust foren end',status,workStatus,district);
+            if(district){
+                query.region = district
+            }
+            if(workStatus){
+                query.workStatus = workStatus
+            }
             const cursor = ridersColl.find(query);
             const result = await cursor.toArray();
+            // console.log(result);
             res.send(result)
         })
         //? riders api here;
@@ -314,7 +324,8 @@ async function run() {
             const query = { _id: new ObjectId(id) };
             const upatedDoc = {
                 $set: {
-                    status: status
+                    status: status,
+                    workStatus:'available'
                 }
             }
             const result = await ridersColl.updateOne(query, upatedDoc);

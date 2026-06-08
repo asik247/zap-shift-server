@@ -95,7 +95,7 @@ async function run() {
                     {email: { $regex: searchText, $options: 'i'}}
                 ]
             }
-            const cursor = userColl.find(query);
+            const cursor = userColl.find(query).sort({createdAT:-1}).limit(5);
             const result = await cursor.toArray();
             res.send(result)
         })
@@ -149,7 +149,7 @@ async function run() {
             const result = await userColl.updateOne(query,updateRole)
             res.send(result)
         })
-        //?get db myperceldata;
+        //?get db myperceldata ✅✅;
         app.get('/percelDatas', async (req, res) => {
             const query = {};
             const email = req.query.email;
@@ -233,6 +233,7 @@ async function run() {
                 const update = {
                     $set: {
                         paymentStatus: 'paid',
+                        deliveryStatus:'pending-pickup',
                         trackingId: trackingId
                     }
                 }

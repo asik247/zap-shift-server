@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId, ServerType } = require('mongodb');
 require('dotenv').config()
 const port = process.env.PORT || 3000;
 //?FireBS Admin and services Accoutn;
@@ -81,7 +81,21 @@ async function run() {
         }
         //? Users relaive apis get metod;
         app.get('/users',async(req,res)=>{
-            const cursor = userColl.find();
+            const searchText = req.query.searchText;
+            // console.log('search text',searchText);
+            const query = {};
+            // ! condition;
+            if(searchText){
+                // query.displayName = searchText
+                //? $regex usign;
+                // query.displayName = {$regex:searchText,$options:'i'}
+                //? usign or;
+                query.$or = [
+                    {displayName: {$regex:searchText, $options:'i'}},
+                    {email: { $regex: searchText, $options: 'i'}}
+                ]
+            }
+            const cursor = userColl.find(query);
             const result = await cursor.toArray();
             res.send(result)
         })

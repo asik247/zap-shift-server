@@ -61,12 +61,21 @@ async function run() {
         const paymentColl = myDB.collection("payments")
         const ridersColl = myDB.collection("riders")
         //? vefify Admin token;
-        const verifyAdmin = async (req,res,next) =>{
+        // const verifyAdmin = async (req,res,next) =>{
+        //     const email = req.decoded_email;
+        //     const query = { email };
+        //     const user = await userColl.findOne(query);
+        //     if(!user || user.role !== 'admin'){
+        //         return res.status(403).send({message:'forbiden access'})
+        //     }
+        //     next()
+        // }
+        const verifyAdmin = async (req,res,next)=>{
             const email = req.decoded_email;
             const query = { email };
             const user = await userColl.findOne(query);
-            if(!user || user.role !== 'admin'){
-                return res.status(403).send({message:'forbiden access'})
+            if(!user || user.role !=='admin'){
+                return res.status(403).send({message:'Forbidien accesss'})
             }
             next()
         }
@@ -80,12 +89,23 @@ async function run() {
         app.get('/users/:id',async(req,res)=>{
 
         })
+        //? Users get apis using email query;
         app.get('/users/:email/role',async(req,res)=>{
             const email = req.params.email;
             const query = { email };
             const user = await userColl.findOne(query);
+            // console.log(user);
+            // console.log(email);
+            // res.send({success:true})
             res.send({role:user?.role || 'user'});
         })
+
+        // app.get('/users/:email/role',async(req,res)=>{
+        //     const email = req.params.email;
+        //     const query = { email };
+        //     const user = await userColl.findOne(query);
+        //     res.send({role:user?.role || 'user'});
+        // })
         //?Users relative apis here;
         app.post('/users', async (req, res) => {
             const user = req.body;

@@ -61,15 +61,6 @@ async function run() {
         const paymentColl = myDB.collection("payments")
         const ridersColl = myDB.collection("riders")
         //? vefify Admin token;
-        // const verifyAdmin = async (req,res,next) =>{
-        //     const email = req.decoded_email;
-        //     const query = { email };
-        //     const user = await userColl.findOne(query);
-        //     if(!user || user.role !== 'admin'){
-        //         return res.status(403).send({message:'forbiden access'})
-        //     }
-        //     next()
-        // }
         const verifyAdmin = async (req,res,next)=>{
             const email = req.decoded_email;
             const query = { email };
@@ -108,18 +99,8 @@ async function run() {
             const email = req.params.email;
             const query = { email };
             const user = await userColl.findOne(query);
-            // console.log(user);
-            // console.log(email);
-            // res.send({success:true})
             res.send({role:user?.role || 'user'});
         })
-
-        // app.get('/users/:email/role',async(req,res)=>{
-        //     const email = req.params.email;
-        //     const query = { email };
-        //     const user = await userColl.findOne(query);
-        //     res.send({role:user?.role || 'user'});
-        // })
         //?Users relative apis here;
         app.post('/users', async (req, res) => {
             const user = req.body;
@@ -180,30 +161,30 @@ async function run() {
 
         })
         //? Parcel data patch and workStatus deliveryStatus update ✅✅;
-        app.patch('/percelDatas/:id',async(req,res)=>{
-            const {riderId,riderEmail,riderName,parcelId} = req.body;
-            // console.log(riderEmail,riderName,riderId,parcelId);
-            const id = req.params.id; 
-            const query = { _id: new ObjectId(id)}
-            const updateDoc = {
-                $set:{
-                    deliveryStatus:'diriver_assigned',
-                    riderId:riderId,
-                    riderEmail:riderEmail
-                }
-            }
-            const result = await myPercelColl.updateOne(query,updateDoc)
+        // app.patch('/percelDatas/:id',async(req,res)=>{
+        //     const {riderId,riderEmail,riderName,parcelId} = req.body;
+        //     // console.log(riderEmail,riderName,riderId,parcelId);
+        //     const id = req.params.id; 
+        //     const query = { _id: new ObjectId(id)}
+        //     const updateDoc = {
+        //         $set:{
+        //             deliveryStatus:'diriver_assigned',
+        //             riderId:riderId,
+        //             riderEmail:riderEmail
+        //         }
+        //     }
+        //     const result = await myPercelColl.updateOne(query,updateDoc)
 
-            // ? updateRider;
-           const riderQuery = { _id:new ObjectId(riderId)}
-           const riderUpdateDoc={
-            $set:{
-                workStatus:'in_delivery'
-            }
-           }
-           const riderResult = await ridersColl.updateOne(riderQuery,riderUpdateDoc)
-           res.send(riderResult)
-        })
+        //     // ? updateRider;
+        //    const riderQuery = { _id:new ObjectId(riderId)}
+        //    const riderUpdateDoc={
+        //     $set:{
+        //         workStatus:'in_delivery'
+        //     }
+        //    }
+        //    const riderResult = await ridersColl.updateOne(riderQuery,riderUpdateDoc)
+        //    res.send(riderResult)
+        // })
         // ? percels delete method;
         app.delete('/percelDatas/:id', async (req, res) => {
             const id = req.params.id;
@@ -310,27 +291,26 @@ async function run() {
         })
         //? query using riders data load;
         app.get('/riders', async (req, res) => {
-            const {status,district,workStatus,} = req.query
+            const {status,workStatus,district} = req.query
+            console.log(status,workStatus,district);
             const query = {};
-            if (status) {
+            if(status){
                 query.status = status
             }
-            // console.log('staust foren end',status,workStatus,district);
-            if(district){
-                query.district = district
-            }
+            //! 3 text validation rider collectin then send data in assignRider page!
             if(workStatus){
                 query.workStatus = workStatus
             }
+            if(district){
+                query.district = district
+            }
             const cursor = ridersColl.find(query);
             const result = await cursor.toArray();
-            // console.log(result);
             res.send(result)
         })
         //? riders api here;
         app.post('/riders', async (req, res) => {
             const rider = req.body;
-            // console.log(rider);
             rider.status = 'pending',
                 rider.createdAT = new Date()
             const result = await ridersColl.insertOne(rider);

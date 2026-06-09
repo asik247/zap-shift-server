@@ -317,7 +317,7 @@ async function run() {
             }
             // console.log('staust foren end',status,workStatus,district);
             if(district){
-                query.region = district
+                query.district = district
             }
             if(workStatus){
                 query.workStatus = workStatus

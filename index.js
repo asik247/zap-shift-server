@@ -158,7 +158,8 @@ async function run() {
                 query.senderEmail = riderEmail
             }
             if(deliveryStatus){
-                query.deliveryStatus = deliveryStatus
+                //? just driver-assign get:- query.deliveryStatus = deliveryStatus
+                query.deliveryStatus = { $in:['driver-assign','rider-arriving']}
             }
             const cursor = myPercelColl.find(query);
             const result = await cursor.toArray();

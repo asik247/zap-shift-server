@@ -61,12 +61,12 @@ async function run() {
         const paymentColl = myDB.collection("payments")
         const ridersColl = myDB.collection("riders")
         //? vefify Admin token;
-        const verifyAdmin = async (req,res,next)=>{
+        const verifyAdmin = async (req, res, next) => {
             const email = req.decoded_email;
             const query = { email };
             const user = await userColl.findOne(query);
-            if(!user || user.role !=='admin'){
-                return res.status(403).send({message:'Forbidien accesss'})
+            if (!user || user.role !== 'admin') {
+                return res.status(403).send({ message: 'Forbidien accesss' })
             }
             next()
         }
@@ -75,35 +75,35 @@ async function run() {
 
 
         //? Users relaive apis get metod;
-        app.get('/users',async(req,res)=>{
+        app.get('/users', async (req, res) => {
             const searchText = req.query.searchText;
             // console.log('search text',searchText);
             const query = {};
             // ! condition;
-            if(searchText){
+            if (searchText) {
                 // query.displayName = searchText
                 //? $regex usign;
                 // query.displayName = {$regex:searchText,$options:'i'}
                 //? usign or;
                 query.$or = [
-                    {displayName: {$regex:searchText, $options:'i'}},
-                    {email: { $regex: searchText, $options: 'i'}}
+                    { displayName: { $regex: searchText, $options: 'i' } },
+                    { email: { $regex: searchText, $options: 'i' } }
                 ]
             }
-            const cursor = userColl.find(query).sort({createdAT:-1}).limit(5);
+            const cursor = userColl.find(query).sort({ createdAT: -1 }).limit(5);
             const result = await cursor.toArray();
             res.send(result)
         })
         //? Users get apis using id and email;
-        app.get('/users/:id',async(req,res)=>{
+        app.get('/users/:id', async (req, res) => {
 
         })
         //? Users get apis using email query;
-        app.get('/users/:email/role',async(req,res)=>{
+        app.get('/users/:email/role', async (req, res) => {
             const email = req.params.email;
             const query = { email };
             const user = await userColl.findOne(query);
-            res.send({role:user?.role || 'user'});
+            res.send({ role: user?.role || 'user' });
         })
         //?Users relative apis here;
         app.post('/users', async (req, res) => {
@@ -121,27 +121,27 @@ async function run() {
             res.send(result);
         })
         //? Users relative apis patch method;
-        app.patch('/users/:id/role',fireBsVerify,verifyAdmin,async(req,res)=>{
+        app.patch('/users/:id/role', fireBsVerify, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const roleInfo = req.body;
             // console.log(id,roleInfo.role);
-            const query = { _id : new ObjectId(id)};
+            const query = { _id: new ObjectId(id) };
             const updateRole = {
-                $set:{
-                    role:roleInfo.role
+                $set: {
+                    role: roleInfo.role
                 }
             }
-            const result = await userColl.updateOne(query,updateRole)
+            const result = await userColl.updateOne(query, updateRole)
             res.send(result)
         })
         //?get db myperceldata;
         app.get('/percelDatas', async (req, res) => {
             const query = {};
-            const {email,deliveryStatus} = req.query;
+            const { email, deliveryStatus } = req.query;
             if (email) {
                 query.senderEmail = email
             }
-            if(deliveryStatus){
+            if (deliveryStatus) {
                 query.deliveryStatus = deliveryStatus
             }
             const options = { sort: { createdAT: -1 } }
@@ -150,16 +150,19 @@ async function run() {
             res.send(result)
         })
         //? driver-assign data loadin;
-        app.get('/percelDatas/rider',async(req,res)=>{
-            const {riderEmail,deliveryStatus} = req.query;
-            // console.log(riderEmail,deliveryStatus);
-            const query = { };
-            if(riderEmail){
-                query.senderEmail = riderEmail
+        app.get('/percelDatas/rider', async (req, res) => {
+            const { riderEmail, deliveryStatus } = req.query;
+            const query = {};
+            if (riderEmail) {
+                query.riderEmail = riderEmail
             }
-            if(deliveryStatus){
+            if (deliveryStatus !=='parcel_delivered') {
                 //? just driver-assign get:- query.deliveryStatus = deliveryStatus
-                query.deliveryStatus = { $in:['driver-assign','rider-arriving']}
+                // query.deliveryStatus = { $in:['driver-assign','rider-arriving']}
+                query.deliveryStatus = { $nin: ['parcel_delivered'] }
+            }
+            else{
+                query.deliveryStatus = deliveryStatus
             }
             const cursor = myPercelColl.find(query);
             const result = await cursor.toArray();
@@ -181,26 +184,27 @@ async function run() {
 
         })
         //? Parcel data patch and workStatus deliveryStatus update;
-        app.patch('/percelDatas/:id',async(req,res)=>{
+        app.patch('/percelDatas/:id', async (req, res) => {
             const id = req.params.id;
-            const {riderId,riderEmail,riderName,parcelId} = req.body
-            const query = { _id: new ObjectId(id)};
+            const { riderId, riderEmail, riderName, parcelId } = req.body
+            const query = { _id: new ObjectId(id) };
             const updateDoc = {
-                $set:{
-                    deliveryStatus:'driver-assign',
-                    riderEmail:riderEmail,
-                    riderName:riderName
-                    
+                $set: {
+                    deliveryStatus: 'driver-assign',
+                    riderEmail: riderEmail,
+                    riderName: riderName,
+                    riderId:riderId
+
                 }
             }
-            const result = await myPercelColl.updateOne(query,updateDoc);
-            const riderQuery = { _id:new ObjectId(riderId)}
+            const result = await myPercelColl.updateOne(query, updateDoc);
+            const riderQuery = { _id: new ObjectId(riderId) }
             const updateRiderDoc = {
-                $set:{
-                    workStatus:'in-delivery'
+                $set: {
+                    workStatus: 'in-delivery'
                 }
             }
-            const riderResult = await ridersColl.updateOne(riderQuery,updateRiderDoc);
+            const riderResult = await ridersColl.updateOne(riderQuery, updateRiderDoc);
             res.send(riderResult)
         })
         // ? percels delete method;
@@ -260,7 +264,7 @@ async function run() {
                 const update = {
                     $set: {
                         paymentStatus: 'paid',
-                        deliveryStatus:'pending-pickup',
+                        deliveryStatus: 'pending-pickup',
                         trackingId: trackingId
                     }
                 }
@@ -309,17 +313,17 @@ async function run() {
         })
         //? query using riders data load;
         app.get('/riders', async (req, res) => {
-            const {status,workStatus,district} = req.query
+            const { status, workStatus, district } = req.query
             // console.log(status,workStatus,district);
             const query = {};
-            if(status){
+            if (status) {
                 query.status = status
             }
             //! 3 text validation rider collectin then send data in assignRider page!
-            if(workStatus){
+            if (workStatus) {
                 query.workStatus = workStatus
             }
-            if(district){
+            if (district) {
                 query.district = district
             }
             const cursor = ridersColl.find(query);
@@ -348,7 +352,7 @@ async function run() {
             const upatedDoc = {
                 $set: {
                     status: status,
-                    workStatus:'available'
+                    workStatus: 'available'
                 }
             }
             const result = await ridersColl.updateOne(query, upatedDoc);
@@ -367,17 +371,27 @@ async function run() {
 
         })
         //?Rider Accept parcels now update deliveryStatus;
-        app.patch('/percelDatas/:id/status',async(req,res)=>{
+        app.patch('/percelDatas/:id/status', async (req, res) => {
             const id = req.params.id;
-            const{deliveryStatus} = req.body
+            const { riderId,deliveryStatus } = req.body
             // console.log(deliveryStatus,id);
-            const query = {_id:new ObjectId(id)};
+            const query = { _id: new ObjectId(id) };
             const updateStatusDoc = {
-                $set:{
-                    deliveryStatus:deliveryStatus
+                $set: {
+                    deliveryStatus: deliveryStatus
                 }
             }
-            const result = await myPercelColl.updateOne(query,updateStatusDoc);
+            if (deliveryStatus === 'parcel_delivered') {
+
+                const riderQuery = { _id: new ObjectId(riderId) }
+                const updateRiderDoc = {
+                    $set: {
+                        workStatus: 'available'
+                    }
+                }
+                const riderResult = await ridersColl.updateOne(riderQuery, updateRiderDoc);
+            }
+            const result = await myPercelColl.updateOne(query, updateStatusDoc);
             res.send(result)
             // const query = { _id:new ObjectId(id)};
             // const updateStatus = {

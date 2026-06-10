@@ -365,7 +365,28 @@ async function run() {
 
 
         })
-
+        //?Rider Accept parcels now update deliveryStatus;
+        app.patch('/percelDatas/:id/status',async(req,res)=>{
+            const id = req.params.id;
+            const{deliveryStatus} = req.body
+            // console.log(deliveryStatus,id);
+            const query = {_id:new ObjectId(id)};
+            const updateStatusDoc = {
+                $set:{
+                    deliveryStatus:deliveryStatus
+                }
+            }
+            const result = await myPercelColl.updateOne(query,updateStatusDoc);
+            res.send(result)
+            // const query = { _id:new ObjectId(id)};
+            // const updateStatus = {
+            //     $set:{
+            //         deliveryStatus = deliveryStatus
+            //     }
+            // }
+            // const result = await myPercelColl.updateOne(query,updateStatus);
+            // res.send(result)
+        })
 
 
 

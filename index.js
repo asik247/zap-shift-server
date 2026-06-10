@@ -70,6 +70,10 @@ async function run() {
             }
             next()
         }
+        //? verify Rider Token;
+
+
+
         //? Users relaive apis get metod;
         app.get('/users',async(req,res)=>{
             const searchText = req.query.searchText;
@@ -142,6 +146,21 @@ async function run() {
             }
             const options = { sort: { createdAT: -1 } }
             const cursor = myPercelColl.find(query, options);
+            const result = await cursor.toArray();
+            res.send(result)
+        })
+        //? driver-assign data loadin;
+        app.get('/percelDatas/rider',async(req,res)=>{
+            const {riderEmail,deliveryStatus} = req.query;
+            // console.log(riderEmail,deliveryStatus);
+            const query = { };
+            if(riderEmail){
+                query.senderEmail = riderEmail
+            }
+            if(deliveryStatus){
+                query.deliveryStatus = deliveryStatus
+            }
+            const cursor = myPercelColl.find(query);
             const result = await cursor.toArray();
             res.send(result)
         })

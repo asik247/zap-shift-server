@@ -160,31 +160,29 @@ async function run() {
             res.send(result);
 
         })
-        //? Parcel data patch and workStatus deliveryStatus update ✅✅;
-        // app.patch('/percelDatas/:id',async(req,res)=>{
-        //     const {riderId,riderEmail,riderName,parcelId} = req.body;
-        //     // console.log(riderEmail,riderName,riderId,parcelId);
-        //     const id = req.params.id; 
-        //     const query = { _id: new ObjectId(id)}
-        //     const updateDoc = {
-        //         $set:{
-        //             deliveryStatus:'diriver_assigned',
-        //             riderId:riderId,
-        //             riderEmail:riderEmail
-        //         }
-        //     }
-        //     const result = await myPercelColl.updateOne(query,updateDoc)
-
-        //     // ? updateRider;
-        //    const riderQuery = { _id:new ObjectId(riderId)}
-        //    const riderUpdateDoc={
-        //     $set:{
-        //         workStatus:'in_delivery'
-        //     }
-        //    }
-        //    const riderResult = await ridersColl.updateOne(riderQuery,riderUpdateDoc)
-        //    res.send(riderResult)
-        // })
+        //? Parcel data patch and workStatus deliveryStatus update;
+        app.patch('/percelDatas/:id',async(req,res)=>{
+            const id = req.params.id;
+            const {riderId,riderEmail,riderName,parcelId} = req.body
+            const query = { _id: new ObjectId(id)};
+            const updateDoc = {
+                $set:{
+                    deliveryStatus:'driver-assign',
+                    riderEmail:riderEmail,
+                    riderName:riderName
+                    
+                }
+            }
+            const result = await myPercelColl.updateOne(query,updateDoc);
+            const riderQuery = { _id:new ObjectId(riderId)}
+            const updateRiderDoc = {
+                $set:{
+                    workStatus:'in-delivery'
+                }
+            }
+            const riderResult = await ridersColl.updateOne(riderQuery,updateRiderDoc);
+            res.send(riderResult)
+        })
         // ? percels delete method;
         app.delete('/percelDatas/:id', async (req, res) => {
             const id = req.params.id;
@@ -292,7 +290,7 @@ async function run() {
         //? query using riders data load;
         app.get('/riders', async (req, res) => {
             const {status,workStatus,district} = req.query
-            console.log(status,workStatus,district);
+            // console.log(status,workStatus,district);
             const query = {};
             if(status){
                 query.status = status

@@ -60,7 +60,8 @@ async function run() {
         const myPercelColl = myDB.collection("percelDatas");
         const paymentColl = myDB.collection("payments")
         const ridersColl = myDB.collection("riders")
-        const trackingsColl = myDB.collection("trackings")
+
+        //✅✅ const trackingsColl = myDB.collection("trackings")
         //? vefify Admin token;
         const verifyAdmin = async (req, res, next) => {
             const email = req.decoded_email;
@@ -286,8 +287,8 @@ async function run() {
                 //? ay khen a validation kro transactionid diya jeno reload korley oo db te 2 ber add na hoy?
                 if (session.payment_status === 'paid') {
                     const resultPayment = await paymentColl.insertOne(payment);
-                    // ? logTracking code here;
-                    logTracking(trackingId,'pending-pickup')
+                    // ? logTracking code here✅✅✅;
+                    // logTracking(trackingId,'pending-pickup')
                     res.send({
                         success: true, modifyPercel: result,
                         trackingId: trackingId,
@@ -398,17 +399,17 @@ async function run() {
             res.send(result)
           
         })
-        //? Tracking collection insert tracking info;
-        const logTracking = async (trackingId,status) =>{
-            const log = {
-                trackingId,
-                status,
-                details:status.split('-').json(' '),
-                createdAT: new Date()
-            }
-            const result = await trackingsColl.insertOne(log);
-            return result;
-        }
+        //? Tracking collection insert tracking info✅✅✅;
+        // const logTracking = async (trackingId,status) =>{
+        //     const log = {
+        //         trackingId,
+        //         status,
+        //         details:status.split('-').json(' '),
+        //         createdAT: new Date()
+        //     }
+        //     const result = await trackingsColl.insertOne(log);
+        //     return result;
+        // }
 
 
 

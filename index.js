@@ -60,8 +60,7 @@ async function run() {
         const myPercelColl = myDB.collection("percelDatas");
         const paymentColl = myDB.collection("payments")
         const ridersColl = myDB.collection("riders")
-
-        //✅✅ const trackingsColl = myDB.collection("trackings")
+        const trackingsColl = myDB.collection("trackings")
         //? vefify Admin token;
         const verifyAdmin = async (req, res, next) => {
             const email = req.decoded_email;
@@ -158,12 +157,12 @@ async function run() {
             if (riderEmail) {
                 query.riderEmail = riderEmail
             }
-            if (deliveryStatus !=='parcel_delivered') {
+            if (deliveryStatus !== 'parcel_delivered') {
                 //? just driver-assign get:- query.deliveryStatus = deliveryStatus
                 // query.deliveryStatus = { $in:['driver-assign','rider-arriving']}
                 query.deliveryStatus = { $nin: ['parcel_delivered'] }
             }
-            else{
+            else {
                 query.deliveryStatus = deliveryStatus
             }
             const cursor = myPercelColl.find(query);
@@ -188,14 +187,14 @@ async function run() {
         //? Parcel data patch and workStatus deliveryStatus update;
         app.patch('/percelDatas/:id', async (req, res) => {
             const id = req.params.id;
-            const { riderId, riderEmail, riderName, parcelId } = req.body
+            const { riderId, trackingId, riderEmail, riderName, parcelId } = req.body
             const query = { _id: new ObjectId(id) };
             const updateDoc = {
                 $set: {
                     deliveryStatus: 'driver-assign',
                     riderEmail: riderEmail,
                     riderName: riderName,
-                    riderId:riderId
+                    riderId: riderId
 
                 }
             }
@@ -207,6 +206,8 @@ async function run() {
                 }
             }
             const riderResult = await ridersColl.updateOne(riderQuery, updateRiderDoc);
+            //? trackingsLog cal code here;
+            logTracking(trackingId, 'driver-assign')
             res.send(riderResult)
         })
         // ? percels delete method;
@@ -287,8 +288,9 @@ async function run() {
                 //? ay khen a validation kro transactionid diya jeno reload korley oo db te 2 ber add na hoy?
                 if (session.payment_status === 'paid') {
                     const resultPayment = await paymentColl.insertOne(payment);
-                    // ? logTracking code here✅✅✅;
-                    // logTracking(trackingId,'pending-pickup')
+                    // ? logTracking call code here;
+                    logTracking(trackingId, 'pending-pickup')
+
                     res.send({
                         success: true, modifyPercel: result,
                         trackingId: trackingId,
@@ -377,7 +379,7 @@ async function run() {
         //?Rider Accept parcels now update deliveryStatus;
         app.patch('/percelDatas/:id/status', async (req, res) => {
             const id = req.params.id;
-            const { riderId,deliveryStatus } = req.body
+            const { riderId, deliveryStatus,trackingId } = req.body
             // console.log(deliveryStatus,id);
             const query = { _id: new ObjectId(id) };
             const updateStatusDoc = {
@@ -396,20 +398,29 @@ async function run() {
                 const riderResult = await ridersColl.updateOne(riderQuery, updateRiderDoc);
             }
             const result = await myPercelColl.updateOne(query, updateStatusDoc);
+            //? logtracking call code here;
+            logTracking(trackingId,deliveryStatus)
             res.send(result)
-          
+
         })
-        //? Tracking collection insert tracking info✅✅✅;
-        // const logTracking = async (trackingId,status) =>{
-        //     const log = {
-        //         trackingId,
-        //         status,
-        //         details:status.split('-').json(' '),
-        //         createdAT: new Date()
-        //     }
-        //     const result = await trackingsColl.insertOne(log);
-        //     return result;
-        // }
+        //? Tracking collection insert tracking info;
+        const logTracking = async (trackingId, status) => {
+            const log = {
+                trackingId,
+                status,
+                details: status.split('-').join(' '),
+                createdAT: new Date()
+            }
+            const result = await trackingsColl.insertOne(log);
+            return result;
+        }
+        //? get trackingId usign trackingColl data;
+        app.get('/trackings/:trackingId/logs',async(req,res)=>{
+            const trackingId = req.params.trackingId;
+            const query = {trackingId};
+            const result = await trackingsColl.find(query).toArray();
+            res.send(result)
+        })
 
 
 

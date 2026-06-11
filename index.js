@@ -178,6 +178,10 @@ async function run() {
         })
         //?post db addPercel data;
         app.post('/percelDatas', async (req, res) => {
+            //? generate tracking id;
+            const trackingId = generateTrackingId();
+            // console.log(trackingId);
+            logTracking(trackingId,'created-parcel')
             const allPercels = req.body;
             allPercels.createdAT = new Date();
             const result = await myPercelColl.insertOne(allPercels);

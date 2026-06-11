@@ -176,6 +176,19 @@ async function run() {
             const result = await myPercelColl.findOne(query);
             res.send(result)
         })
+        //? get all count usign pipeline✅✅✅;
+        app.get('/percelDatas/delivery-status/stats',async(req,res)=>{
+            const pipeline = [
+                {
+                    $group:{
+                        _id:'$deliveryStatus',
+                        count: {$sum:1}
+                }
+            }
+        ]
+        const result = await myPercelColl.aggregate(pipeline).toArray();
+        return res.send(result)
+        })
         //?post db addPercel data;
         app.post('/percelDatas', async (req, res) => {
             //? generate tracking id;
@@ -297,7 +310,7 @@ async function run() {
                     // ? logTracking call code here;
                     logTracking(trackingId, 'parcel-paid')
 
-                    res.send({
+                   return res.send({
                         success: true, modifyPercel: result,
                         trackingId: trackingId,
                         transactionId: session.payment_intent,
@@ -306,7 +319,7 @@ async function run() {
                 }
 
             }
-            res.send({ success: false })
+          return res.send({ success: false })
         })
         //? get all payment or query set get db;
         app.get('/payment', fireBsVerify, async (req, res) => {

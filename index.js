@@ -180,10 +180,10 @@ async function run() {
         app.post('/percelDatas', async (req, res) => {
             //? generate tracking id;
             const trackingId = generateTrackingId();
-            // console.log(trackingId);
-            logTracking(trackingId,'created-parcel')
             const allPercels = req.body;
             allPercels.createdAT = new Date();
+            allPercels.trackingId = trackingId
+            logTracking(trackingId, 'created-parcel')
             const result = await myPercelColl.insertOne(allPercels);
             res.send(result);
 
@@ -243,7 +243,8 @@ async function run() {
                 mode: 'payment',
                 metadata: {
                     percelId: paymentInfo.percelId,
-                    percelName: paymentInfo.percelName
+                    percelName: paymentInfo.percelName,
+                    trackingId: paymentInfo.trackingId
                 },
                 customer_email: paymentInfo.senderEmail,
                 success_url: `${process.env.STRIP_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
@@ -251,12 +252,14 @@ async function run() {
             })
             res.send({ url: session.url })
         })
+
         //?Payment success api retrive;
         app.patch('/payment-success', async (req, res) => {
             const sessionId = req.query.session_id;
             const session = await stripe.checkout.sessions.retrieve(sessionId);
             // console.log('session retirve', session);
-            const trackingId = generateTrackingId();
+            // Todo: don not generateTracking id ? ;
+            const trackingId = session.metadata.trackingId;
             //?Existing transactiondId;
             const transactionId = session.payment_intent;
             const query = { transactionId: transactionId }
@@ -271,8 +274,7 @@ async function run() {
                 const update = {
                     $set: {
                         paymentStatus: 'paid',
-                        deliveryStatus: 'pending-pickup',
-                        trackingId: trackingId
+                        deliveryStatus: 'parcel-paid'
                     }
                 }
                 const result = await myPercelColl.updateOne(query, update);
@@ -293,7 +295,7 @@ async function run() {
                 if (session.payment_status === 'paid') {
                     const resultPayment = await paymentColl.insertOne(payment);
                     // ? logTracking call code here;
-                    logTracking(trackingId, 'pending-pickup')
+                    logTracking(trackingId, 'parcel-paid')
 
                     res.send({
                         success: true, modifyPercel: result,
@@ -383,7 +385,7 @@ async function run() {
         //?Rider Accept parcels now update deliveryStatus;
         app.patch('/percelDatas/:id/status', async (req, res) => {
             const id = req.params.id;
-            const { riderId, deliveryStatus,trackingId } = req.body
+            const { riderId, deliveryStatus, trackingId } = req.body
             // console.log(deliveryStatus,id);
             const query = { _id: new ObjectId(id) };
             const updateStatusDoc = {
@@ -403,7 +405,7 @@ async function run() {
             }
             const result = await myPercelColl.updateOne(query, updateStatusDoc);
             //? logtracking call code here;
-            logTracking(trackingId,deliveryStatus)
+            logTracking(trackingId, deliveryStatus)
             res.send(result)
 
         })
@@ -419,9 +421,9 @@ async function run() {
             return result;
         }
         //? get trackingId usign trackingColl data;
-        app.get('/trackings/:trackingId/logs',async(req,res)=>{
+        app.get('/trackings/:trackingId/logs', async (req, res) => {
             const trackingId = req.params.trackingId;
-            const query = {trackingId};
+            const query = { trackingId };
             const result = await trackingsColl.find(query).toArray();
             res.send(result)
         })

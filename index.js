@@ -365,14 +365,78 @@ async function run() {
         //? Aggregration using get rider data❌❌❌;
         app.get('/riders/delivery-per-day', async (req, res) => {
             const email = req.query.email;
+            // const pipeline = [
+            //     {
+            //         $match: {
+            //             riderEmail: email,
+            //             deliveryStatus: 'parcel_delivered'
+            //         }
+            //     },
+            //     {
+            //         $lookup: {
+            //             from: 'trackings',
+            //             localField: 'trackingId',
+            //             foreignField: 'trackingId',
+            //             as: 'parcel_trackings'
+            //         }
+            //     }, {
+            //         $unwind:'$parcel_trackings'
+            //     },{
+            //         $match:{
+            //             'parcel_trackings.status':'parcel_delivered'
+            //         }
+            //     }
+            // ]
+            //? new pipeline;
             const pipeline = [
                 {
                     $match: {
                         riderEmail: email,
-                        deliveryStatus:'parcel_delivered'
+                        deliveryStatus: 'parcel_delivered'
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'trackings',
+                        localField: 'trackingId',
+                        foreignField: 'trackingId',
+                        as: 'parcel_trackings'
+                    }
+                },
+                {
+                    $unwind: '$parcel_trackings'
+                },
+                {
+                    $match: {
+                        'parcel_trackings.status': 'parcel_delivered'
+                    }
+                },
+                {
+                    $group: {
+                        _id: {
+                            $dateToString: {
+                                format: '%Y-%m-%d',
+                                date: '$parcel_trackings.createdAT'
+                            }
+                        },
+                        deliveredCount: {
+                            $sum: 1
+                        }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        date: '$_id',
+                        deliveredCount: 1
+                    }
+                },
+                {
+                    $sort: {
+                        date: 1
                     }
                 }
-            ]
+            ];
             const result = await myPercelColl.aggregate(pipeline).toArray();
             return res.send(result)
         })

@@ -176,18 +176,25 @@ async function run() {
             const result = await myPercelColl.findOne(query);
             res.send(result)
         })
-        //? get all count usign pipeline✅✅✅;
-        app.get('/percelDatas/delivery-status/stats',async(req,res)=>{
+        //?  get all count usign pipeline;
+        app.get('/percelDatas/delivery-status/stats', async (req, res) => {
+            //? Aggregation Pipeline;
             const pipeline = [
                 {
-                    $group:{
-                        _id:'$deliveryStatus',
-                        count: {$sum:1}
+                    $group: {
+                        _id: '$deliveryStatus',
+                        count: { $sum: 1 }
+                    }
+                }, {
+                    $project: {
+                        status: '$_id',
+                        count: 1,
+                        // _id:0
+                    }
                 }
-            }
-        ]
-        const result = await myPercelColl.aggregate(pipeline).toArray();
-        return res.send(result)
+            ]
+            const result = await myPercelColl.aggregate(pipeline).toArray();
+            return res.send(result)
         })
         //?post db addPercel data;
         app.post('/percelDatas', async (req, res) => {
@@ -310,7 +317,7 @@ async function run() {
                     // ? logTracking call code here;
                     logTracking(trackingId, 'parcel-paid')
 
-                   return res.send({
+                    return res.send({
                         success: true, modifyPercel: result,
                         trackingId: trackingId,
                         transactionId: session.payment_intent,
@@ -319,7 +326,7 @@ async function run() {
                 }
 
             }
-          return res.send({ success: false })
+            return res.send({ success: false })
         })
         //? get all payment or query set get db;
         app.get('/payment', fireBsVerify, async (req, res) => {
@@ -355,6 +362,21 @@ async function run() {
             const result = await cursor.toArray();
             res.send(result)
         })
+        //? Aggregration using get rider data❌❌❌;
+        app.get('/riders/delivery-per-day', async (req, res) => {
+            const email = req.query.email;
+            const pipeline = [
+                {
+                    $match: {
+                        riderEmail: email,
+                        deliveryStatus:'parcel_delivered'
+                    }
+                }
+            ]
+            const result = await myPercelColl.aggregate(pipeline).toArray();
+            return res.send(result)
+        })
+
         //? riders api here;
         app.post('/riders', async (req, res) => {
             const rider = req.body;

@@ -362,7 +362,7 @@ async function run() {
             const result = await cursor.toArray();
             res.send(result)
         })
-        //? Aggregration using get rider data❌❌❌;
+        //? Aggregration using get rider data;
         app.get('/riders/delivery-per-day', async (req, res) => {
             const email = req.query.email;
             // const pipeline = [
